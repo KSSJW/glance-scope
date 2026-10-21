@@ -3,9 +3,9 @@ import 'dart:convert';
 
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
-import 'package:glance_scope/component/gauge/gauge.dart';
+import 'package:glance_scope/component/gauge.dart';
 import 'package:http/http.dart' as http;
-import 'package:glance_scope/component/chart/all_chart.dart';
+import 'package:glance_scope/component/all_chart.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 
 class HomePage extends StatefulWidget {
