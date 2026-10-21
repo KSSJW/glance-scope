@@ -78,6 +78,22 @@ class _HomePageState extends State<HomePage> {
     return decoded;
   }
 
+  void _updateHistory(dynamic raw, List<FlSpot> history) {
+    if (raw is! num) return;
+
+    double value;
+
+    if (raw is! double) {
+      value = raw.toDouble();
+    } else {
+      value = raw;
+    }
+
+    history.add(FlSpot(sampleIndex, value));
+
+    if (history.length > maxHistoryPoints) history.removeAt(0);
+  }
+
   Future<void> refresh() async {
     try {
       final results = await Future.wait([
@@ -97,7 +113,11 @@ class _HomePageState extends State<HomePage> {
       setState(() {
         cpu = results[0];
         ram = results[1];
+
+        final cpuValue = results[0]['cpu'];
+        final ramValue = results[1]['percent'];
         final gpuList = results[2] as List<dynamic>;
+
         rawGpu = gpuList;
 
         final gpuUsage = gpuList.isNotEmpty
@@ -105,38 +125,9 @@ class _HomePageState extends State<HomePage> {
           : null;
         gpu = gpuUsage;
 
-        final cpuValue = results[0]['cpu'];
-        final ramValue = results[1]['percent'];
-
-        if (cpuValue is num) {
-          cpuHistory.add(
-            FlSpot(sampleIndex, cpuValue.toDouble()),
-          );
-
-          if (cpuHistory.length > maxHistoryPoints) {
-            cpuHistory.removeAt(0);
-          }
-        }
-
-        if (ramValue is num) {
-          ramHistory.add(
-            FlSpot(sampleIndex, ramValue.toDouble()),
-          );
-
-          if (ramHistory.length > maxHistoryPoints) {
-            ramHistory.removeAt(0);
-          }
-        }
-
-        if (gpuUsage != null) {
-          gpuHistory.add(
-            FlSpot(sampleIndex, gpuUsage),
-          );
-
-          if (gpuHistory.length > maxHistoryPoints) {
-            gpuHistory.removeAt(0);
-          }
-        }
+        _updateHistory(cpuValue, cpuHistory);
+        _updateHistory(gpu, gpuHistory);
+        _updateHistory(ramValue, ramHistory);
 
         sampleIndex++;
 
