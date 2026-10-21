@@ -7,6 +7,7 @@ import 'package:http/http.dart' as http;
 import 'package:glance_scope/component/chart/all_chart.dart' as cpu_chart;
 import 'package:glance_scope/component/gauge/cpu_gauge.dart';
 import 'package:glance_scope/component/gauge/gpu_gauge.dart';
+import 'package:wakelock_plus/wakelock_plus.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({
@@ -43,6 +44,8 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     super.initState();
+
+    WakelockPlus.enable();
     refresh();
     timer = Timer.periodic(
       const Duration(milliseconds: 500),
@@ -53,6 +56,8 @@ class _HomePageState extends State<HomePage> {
   @override
   void dispose() {
     timer?.cancel();
+    WakelockPlus.disable();
+
     super.dispose();
   }
 
