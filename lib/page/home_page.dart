@@ -162,85 +162,101 @@ class _HomePageState extends State<HomePage> {
         child: ListView(
           padding: const EdgeInsets.all(16),
           children: [
-            Row(
-              children: [
-                Icon(
-                  error == null
-                      ? Icons.check_circle
-                      : Icons.error_outline,
-                  color: error == null
-                      ? Colors.green
-                      : Colors.red,
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    error == null
-                        ? 'Connected to ${widget.baseUrl}'
-                        : 'Connection failed',
-                  ),
-                ),
-                if (loading)
-                  const SizedBox(
-                    width: 18,
-                    height: 18,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                    ),
-                  ),
-              ],
-            ),
-            if (error != null)
-              Padding(
-                padding: const EdgeInsets.only(top: 8),
-                child: Text(
-                  error!,
-                  style: const TextStyle(color: Colors.red),
-                ),
-              ),
-            if (lastUpdated != null)
-              Padding(
-                padding: const EdgeInsets.only(top: 8),
-                child: Text(
-                  'Updated at ${lastUpdated!.toLocal()}',
-                  style: Theme.of(context)
-                      .textTheme
-                      .bodySmall,
-                ),
-              ),
-            const SizedBox(height: 16),
-            LayoutBuilder(
-              builder: (context, constraints) {
-                final columns = constraints.maxWidth >= 700 ? 3 : 1;
+            _connectionStatus(),
+            if (error != null) _errorStatus(),
+            if (lastUpdated != null) _updateStatus(),
 
-                return GridView.count(
-                  crossAxisCount: columns,
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  mainAxisExtent: 240,
-                  mainAxisSpacing: 8,
-                  crossAxisSpacing: 8,
-                  children: [
-                    Gauge(
-                      title: 'CPU Usage',
-                      usage: ((cpu?['cpu'] as num?)?.toDouble() ?? 0).clamp(0.0, 100.0),
-                    ),
-                    Gauge(
-                      title: 'GPU Usage',
-                      usage: ((gpu as num?)?.toDouble() ?? 0).clamp(0.0, 100.0),
-                    ),
-                    AllChart(
-                      cpu: cpuHistory,
-                      ram: ramHistory,
-                      gpu: gpuHistory
-                    )
-                  ],
-                );
-              },
-            ),
+            const SizedBox(height: 16),
+
+            _pane(),
           ],
         ),
       ),
+    );
+  }
+
+  Row _connectionStatus() {
+    return Row(
+      children: [
+        Icon(
+          error == null
+              ? Icons.check_circle
+              : Icons.error_outline,
+          color: error == null
+              ? Colors.green
+              : Colors.red,
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text(
+            error == null
+                ? 'Connected to ${widget.baseUrl}'
+                : 'Connection failed',
+          ),
+        ),
+        if (loading)
+          const SizedBox(
+            width: 18,
+            height: 18,
+            child: CircularProgressIndicator(
+              strokeWidth: 2,
+            ),
+          ),
+      ],
+    );
+  }
+
+  Padding _errorStatus() {
+    return Padding(
+      padding: const EdgeInsets.only(top: 8),
+      child: Text(
+        error!,
+        style: const TextStyle(color: Colors.red),
+      ),
+    );
+  }
+
+  Padding _updateStatus() {
+    return Padding(
+      padding: const EdgeInsets.only(top: 8),
+      child: Text(
+        'Updated at ${lastUpdated!.toLocal()}',
+        style: Theme.of(context)
+            .textTheme
+            .bodySmall,
+      ),
+    );
+  }
+
+  LayoutBuilder _pane() {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final columns = constraints.maxWidth >= 700 ? 3 : 1;
+
+        return GridView.count(
+          crossAxisCount: columns,
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          mainAxisExtent: 240,
+          mainAxisSpacing: 8,
+          crossAxisSpacing: 8,
+          children: [
+            Gauge(
+              title: 'CPU Usage',
+              usage: ((cpu?['cpu'] as num?)?.toDouble() ?? 0).clamp(0.0, 100.0),
+            ),
+            Gauge(
+              title: 'GPU Usage',
+              usage: ((gpu as num?)?.toDouble() ?? 0).clamp(0.0, 100.0),
+            ),
+            AllChart(
+              cpu: cpuHistory,
+              ram: ramHistory,
+              gpu: gpuHistory
+            )
+          ],
+        );
+      },
     );
   }
 }
