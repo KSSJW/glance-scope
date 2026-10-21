@@ -145,8 +145,8 @@ class _LegendItem extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         Container(
-          width: 18,
-          height: 3,
+          width: 8,
+          height: 4,
           decoration: BoxDecoration(
             color: color,
             borderRadius: BorderRadius.circular(2),
