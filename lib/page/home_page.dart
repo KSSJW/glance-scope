@@ -3,10 +3,9 @@ import 'dart:convert';
 
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
+import 'package:glance_scope/component/gauge.dart';
 import 'package:http/http.dart' as http;
-import 'package:glance_scope/component/chart/all_chart.dart' as cpu_chart;
-import 'package:glance_scope/component/gauge/cpu_gauge.dart';
-import 'package:glance_scope/component/gauge/gpu_gauge.dart';
+import 'package:glance_scope/component/all_chart.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 
 class HomePage extends StatefulWidget {
@@ -79,6 +78,22 @@ class _HomePageState extends State<HomePage> {
     return decoded;
   }
 
+  void _updateHistory(dynamic raw, List<FlSpot> history) {
+    if (raw is! num) return;
+
+    double value;
+
+    if (raw is! double) {
+      value = raw.toDouble();
+    } else {
+      value = raw;
+    }
+
+    history.add(FlSpot(sampleIndex, value));
+
+    if (history.length > maxHistoryPoints) history.removeAt(0);
+  }
+
   Future<void> refresh() async {
     try {
       final results = await Future.wait([
@@ -98,7 +113,11 @@ class _HomePageState extends State<HomePage> {
       setState(() {
         cpu = results[0];
         ram = results[1];
+
+        final cpuValue = results[0]['cpu'];
+        final ramValue = results[1]['percent'];
         final gpuList = results[2] as List<dynamic>;
+
         rawGpu = gpuList;
 
         final gpuUsage = gpuList.isNotEmpty
@@ -106,38 +125,9 @@ class _HomePageState extends State<HomePage> {
           : null;
         gpu = gpuUsage;
 
-        final cpuValue = results[0]['cpu'];
-        final ramValue = results[1]['percent'];
-
-        if (cpuValue is num) {
-          cpuHistory.add(
-            FlSpot(sampleIndex, cpuValue.toDouble()),
-          );
-
-          if (cpuHistory.length > maxHistoryPoints) {
-            cpuHistory.removeAt(0);
-          }
-        }
-
-        if (ramValue is num) {
-          ramHistory.add(
-            FlSpot(sampleIndex, ramValue.toDouble()),
-          );
-
-          if (ramHistory.length > maxHistoryPoints) {
-            ramHistory.removeAt(0);
-          }
-        }
-
-        if (gpuUsage != null) {
-          gpuHistory.add(
-            FlSpot(sampleIndex, gpuUsage),
-          );
-
-          if (gpuHistory.length > maxHistoryPoints) {
-            gpuHistory.removeAt(0);
-          }
-        }
+        _updateHistory(cpuValue, cpuHistory);
+        _updateHistory(gpu, gpuHistory);
+        _updateHistory(ramValue, ramHistory);
 
         sampleIndex++;
 
@@ -163,79 +153,101 @@ class _HomePageState extends State<HomePage> {
         child: ListView(
           padding: const EdgeInsets.all(16),
           children: [
-            Row(
-              children: [
-                Icon(
-                  error == null
-                      ? Icons.check_circle
-                      : Icons.error_outline,
-                  color: error == null
-                      ? Colors.green
-                      : Colors.red,
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    error == null
-                        ? 'Connected to ${widget.baseUrl}'
-                        : 'Connection failed',
-                  ),
-                ),
-                if (loading)
-                  const SizedBox(
-                    width: 18,
-                    height: 18,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                    ),
-                  ),
-              ],
-            ),
-            if (error != null)
-              Padding(
-                padding: const EdgeInsets.only(top: 8),
-                child: Text(
-                  error!,
-                  style: const TextStyle(color: Colors.red),
-                ),
-              ),
-            if (lastUpdated != null)
-              Padding(
-                padding: const EdgeInsets.only(top: 8),
-                child: Text(
-                  'Updated at ${lastUpdated!.toLocal()}',
-                  style: Theme.of(context)
-                      .textTheme
-                      .bodySmall,
-                ),
-              ),
-            const SizedBox(height: 16),
-            LayoutBuilder(
-              builder: (context, constraints) {
-                final columns = constraints.maxWidth >= 700 ? 3 : 1;
+            _connectionStatus(),
+            if (error != null) _errorStatus(),
+            if (lastUpdated != null) _updateStatus(),
 
-                return GridView.count(
-                  crossAxisCount: columns,
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  mainAxisExtent: 240,
-                  mainAxisSpacing: 8,
-                  crossAxisSpacing: 8,
-                  children: [
-                    CPUGauge(
-                      value: (cpu?['cpu'] as num?)?.toDouble() ?? 0,
-                    ),
-                    GPUGauge(
-                      value: (gpu as num?)?.toDouble() ?? 0,
-                    ),
-                    cpu_chart.build(cpuHistory, ramHistory, gpuHistory, context),
-                  ],
-                );
-              },
-            ),
+            const SizedBox(height: 16),
+
+            _pane(),
           ],
         ),
       ),
+    );
+  }
+
+  Row _connectionStatus() {
+    return Row(
+      children: [
+        Icon(
+          error == null
+              ? Icons.check_circle
+              : Icons.error_outline,
+          color: error == null
+              ? Colors.green
+              : Colors.red,
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text(
+            error == null
+                ? 'Connected to ${widget.baseUrl}'
+                : 'Connection failed',
+          ),
+        ),
+        if (loading)
+          const SizedBox(
+            width: 18,
+            height: 18,
+            child: CircularProgressIndicator(
+              strokeWidth: 2,
+            ),
+          ),
+      ],
+    );
+  }
+
+  Padding _errorStatus() {
+    return Padding(
+      padding: const EdgeInsets.only(top: 8),
+      child: Text(
+        error!,
+        style: const TextStyle(color: Colors.red),
+      ),
+    );
+  }
+
+  Padding _updateStatus() {
+    return Padding(
+      padding: const EdgeInsets.only(top: 8),
+      child: Text(
+        'Updated at ${lastUpdated!.toLocal()}',
+        style: Theme.of(context)
+            .textTheme
+            .bodySmall,
+      ),
+    );
+  }
+
+  LayoutBuilder _pane() {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final columns = constraints.maxWidth >= 700 ? 3 : 1;
+
+        return GridView.count(
+          crossAxisCount: columns,
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          mainAxisExtent: 240,
+          mainAxisSpacing: 8,
+          crossAxisSpacing: 8,
+          children: [
+            Gauge(
+              title: 'CPU Usage',
+              usage: ((cpu?['cpu'] as num?)?.toDouble() ?? 0).clamp(0.0, 100.0),
+            ),
+            Gauge(
+              title: 'GPU Usage',
+              usage: ((gpu as num?)?.toDouble() ?? 0).clamp(0.0, 100.0),
+            ),
+            AllChart(
+              cpu: cpuHistory,
+              ram: ramHistory,
+              gpu: gpuHistory
+            )
+          ],
+        );
+      },
     );
   }
 }
