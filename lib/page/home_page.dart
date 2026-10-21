@@ -3,10 +3,9 @@ import 'dart:convert';
 
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
+import 'package:glance_scope/component/gauge/gauge.dart';
 import 'package:http/http.dart' as http;
 import 'package:glance_scope/component/chart/all_chart.dart';
-import 'package:glance_scope/component/gauge/cpu_gauge.dart';
-import 'package:glance_scope/component/gauge/gpu_gauge.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 
 class HomePage extends StatefulWidget {
@@ -222,11 +221,13 @@ class _HomePageState extends State<HomePage> {
                   mainAxisSpacing: 8,
                   crossAxisSpacing: 8,
                   children: [
-                    CPUGauge(
-                      value: (cpu?['cpu'] as num?)?.toDouble() ?? 0,
+                    Gauge(
+                      title: 'CPU Usage',
+                      usage: ((cpu?['cpu'] as num?)?.toDouble() ?? 0).clamp(0.0, 100.0),
                     ),
-                    GPUGauge(
-                      value: (gpu as num?)?.toDouble() ?? 0,
+                    Gauge(
+                      title: 'GPU Usage',
+                      usage: ((gpu as num?)?.toDouble() ?? 0).clamp(0.0, 100.0),
                     ),
                     AllChart(
                       cpu: cpuHistory,
