@@ -4,7 +4,7 @@ import 'dart:convert';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'package:glance_scope/component/chart/all_chart.dart' as cpu_chart;
+import 'package:glance_scope/component/chart/all_chart.dart';
 import 'package:glance_scope/component/gauge/cpu_gauge.dart';
 import 'package:glance_scope/component/gauge/gpu_gauge.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
@@ -228,7 +228,11 @@ class _HomePageState extends State<HomePage> {
                     GPUGauge(
                       value: (gpu as num?)?.toDouble() ?? 0,
                     ),
-                    cpu_chart.build(cpuHistory, ramHistory, gpuHistory, context),
+                    AllChart(
+                      cpu: cpuHistory,
+                      ram: ramHistory,
+                      gpu: gpuHistory
+                    )
                   ],
                 );
               },
