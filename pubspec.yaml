@@ -37,6 +37,7 @@ dependencies:
   http: ^1.6.0
   fl_chart: ^1.2.0
   gauge_indicator: ^0.6.0
+  wakelock_plus: ^1.8.1
 
 dev_dependencies:
   flutter_test:
